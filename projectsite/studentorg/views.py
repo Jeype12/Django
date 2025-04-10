@@ -1,13 +1,16 @@
+from typing import Any
+from django.db.models.query import QuerySet
+from django.db.models import Q
 from django.shortcuts import render
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from studentorg.models import College, Organization, Student, Program, OrgMember
 from studentorg.forms import CollegeForm, OrganizationForm, StudentForm, ProgramForm, OrgMemberForm
 from django.urls import reverse_lazy
-from typing import Any
-from django.db.models.query import QuerySet
-from django.db.models import Q
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 
+@method_decorator(login_required, name='dispatch')
 class HomePageView(ListView):
     model = Organization
     context_object_name = 'home'
@@ -47,9 +50,11 @@ class OrganizationList(ListView):
     def get_queryset(self, *args, **kwargs):
         qs = super(OrganizationList, self).get_queryset(*args, **kwargs)
         if self.request.GET.get("q") != None:
-            query = self.request.GET.get('q')
-            qs = qs.filter(Q(name__icontains=query) |
-                           Q(description__icontains=query))
+            query = self.request.GET.get("q")
+            qs = qs.filter(
+                Q(name__icontains=query) |
+                Q(description__icontains=query)
+            )
         return qs
 
 class OrganizationCreateView(CreateView):
@@ -133,10 +138,10 @@ class OrgMemberCreateView(CreateView):
 class OrgMemberUpdateView(UpdateView):
     model = OrgMember
     form_class = OrgMemberForm
-    template_name = 'OrgMember_edit.html'
+    template_name = 'orgmember_edit.html'
     success_url = reverse_lazy('orgmember-list')
 
 class OrgMemberDeleteView(DeleteView):
     model = OrgMember
-    template_name = 'OrgMember_del.html'
+    template_name = 'orgmember_del.html'
     success_url = reverse_lazy('orgmember-list')
